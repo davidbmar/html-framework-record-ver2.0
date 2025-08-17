@@ -1,0 +1,59 @@
+# === OS junk ===
+.DS_Store
+*/.DS_Store
+Thumbs.db
+
+# === Editors/IDEs ===
+.vscode/
+.idea/
+*.swp
+
+# === Logs ===
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# === Environment files (keep examples) ===
+.env
+.env.*
+!.env.example
+
+# === Node/Frontend build artifacts (safe even if you’re not using them yet) ===
+node_modules/
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+dist/
+build/
+.out/
+.out-static/
+.next/
+.nuxt/
+.svelte-kit/
+.storybook-out/
+coverage/
+.nyc_output/
+.cache/
+.parcel-cache/
+.turbo/
+.vite/
+.eslintcache
+.stylelintcache
+.vercel/
+.netlify/
+
+# === Python (if you run local servers/scripts) ===
+__pycache__/
+*.pyc
+
+# === Recorder artifacts (don’t commit local audio) ===
+web/record-ver2.0/**/*.wav
+web/record-ver2.0/recordings/
+
+# === Misc temp ===
+tmp/
+temp/
+*.tmp
+
