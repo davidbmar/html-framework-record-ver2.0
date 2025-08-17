@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Recorder v2.0 (PCM · Local-only)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Tailwind (fine for local dev) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="./css/harness.css" />
+  <style>
+    /* Pulse for recording indicator */
+    @keyframes pulseDot { 0%{transform:scale(1);opacity:1} 50%{transform:scale(1.35);opacity:.65} 100%{transform:scale(1);opacity:1} }
+    .pulse-dot { animation: pulseDot 1s ease-in-out infinite; }
+
+    /* Button base + dark disabled look */
+    .ctrl-btn { display:inline-flex; align-items:center; gap:.5rem; padding:.5rem .75rem; border-radius:.75rem; font-weight:600; font-size:.875rem; transition:background-color .15s, opacity .15s, color .15s; }
+    .ctrl-disabled { background:#cbd5e1; color:#475569; opacity:.9; cursor:not-allowed; }
+
+    /* We’ll add active variants via JS */
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <main class="max-w-4xl mx-auto p-6 space-y-6">
+    <header class="flex items-center justify-between">
+      <h1 class="text-xl font-semibold tracking-tight">Recorder v2.0 (PCM · Local-only)</h1>
+      <!-- Boot diagnostics target (optional) -->
+      <div id="boot-errors" class="text-xs text-rose-700 font-mono"></div>
+    </header>
+
+    <!-- Controls -->
+    <section class="border border-slate-200 rounded-2xl bg-white p-4 shadow-sm">
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- Start -->
+        <button id="btnStart" data-variant="start" class="ctrl-btn text-white bg-emerald-600 hover:bg-emerald-700">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+          <span>Start</span>
+        </button>
+        <!-- Pause -->
+        <button id="btnPause" data-variant="pause" class="ctrl-btn ctrl-disabled" disabled>
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
+          <span>Pause</span>
+        </button>
+        <!-- Resume -->
+        <button id="btnResume" data-variant="resume" class="ctrl-btn ctrl-disabled" disabled>
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+          <span>Resume</span>
+        </button>
+        <!-- Stop -->
+        <button id="btnStop" data-variant="stop" class="ctrl-btn ctrl-disabled" disabled>
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+          <span>Stop</span>
+        </button>
+
+        <!-- State chip to the RIGHT of the buttons -->
+        <div class="ml-auto">
+          <div id="stateChip" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200"
+               aria-live="polite" aria-atomic="true">
+            <span id="stateIcon" class="flex items-center">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+            </span>
+            <span id="stateLabel" class="text-sm font-medium">Stopped – not recording</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Secondary controls -->
+      <div class="mt-4 flex items-center gap-3 justify-end">
+        <label class="text-sm text-slate-600">Chunk (sec)</label>
+        <input id="chunkSeconds" type="number" min="1" value="2" class="px-2 py-1.5 border border-slate-300 rounded-lg text-sm w-16" />
+        <!-- Kept for compatibility (PCM ignores format) -->
+        <label class="text-sm text-slate-600">Format</label>
+        <select id="mimeType" class="px-2 py-1.5 border border-slate-300 rounded-lg text-sm">
+          <option value="audio/wav">WAV (PCM)</option>
+          <option value="audio/webm;codecs=opus" selected>webm/opus</option>
+          <option value="audio/webm">webm</option>
+        </select>
+      </div>
+
+      <div class="mt-5 grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div class="col-span-2">
+          <div class="text-sm text-slate-500 mb-2">Live Level</div>
+          <div class="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
+            <div id="liveLevelBar" class="h-full bg-emerald-500 rounded-full transition-[width] duration-75" style="width:0%"></div>
+          </div>
+          <div id="liveLevelText" class="text-xs text-slate-500 mt-1">RMS: 0.00 · Peak: 0.00</div>
+        </div>
+        <div class="col-span-1">
+          <div class="text-sm text-slate-500 mb-2">Session</div>
+          <div class="grid grid-cols-2 gap-2 text-sm">
+            <div><div class="text-slate-500">Status</div>  <div id="sessionStatus" class="font-semibold">idle</div></div>
+            <div><div class="text-slate-500">Duration</div><div id="sessionDuration" class="font-semibold">00:00</div></div>
+            <div><div class="text-slate-500">Chunks</div>  <div id="sessionChunks" class="font-semibold">0</div></div>
+            <div><div class="text-slate-500">Size</div>    <div id="sessionSize" class="font-semibold">0 KB</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recordings -->
+    <section class="border border-slate-200 rounded-2xl bg-white p-4 shadow-sm">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold">Recordings</h2>
+        <div class="flex items-center gap-2">
+          <label class="text-sm text-slate-600">Player</label>
+          <select id="playerMode" class="px-2 py-1.5 border border-slate-300 rounded-lg text-sm">
+            <option value="mse" selected>MSE (sequence)</option>
+            <option value="wav">WAV (assembled)</option>
+          </select>
+          <button id="btnRefresh" class="px-3 py-1.5 rounded-lg border border-slate-300 text-sm hover:bg-slate-50">Refresh</button>
+        </div>
+      </div>
+      <ul id="recordingsList" class="mt-4 space-y-3"></ul>
+    </section>
+
+    <footer class="text-xs text-slate-500 pt-4">
+      Local-only prototype. Serve via <code>http://localhost</code> (not <code>file://</code>).
+    </footer>
+  </main>
+
+  <!-- Boot loader (keeps imports correct relative to this file) -->
+  <script type="module" src="./js/boot.js"></script>
+</body>
+</html>
+

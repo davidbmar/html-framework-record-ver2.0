@@ -1,0 +1,14 @@
+/* Minimal UI helpers */
+.btn-primary { padding: 0.5rem 1rem; border-radius: 0.75rem; background: #059669; color: #fff; }
+.btn-primary:hover { background:#047857; }
+.btn-secondary { padding: 0.5rem 1rem; border-radius: 0.75rem; background: #334155; color:#fff; }
+.btn-secondary:hover { background:#1f2937; }
+.btn-danger { padding: 0.5rem 1rem; border-radius: 0.75rem; background: #e11d48; color:#fff; }
+.btn-danger:hover { background:#be123c; }
+.btn-ghost { padding: 0.35rem 0.75rem; border-radius: 0.5rem; }
+.input { padding: 0.4rem 0.6rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; }
+.card { border: 1px solid #f1f5f9; border-radius: 0.75rem; padding: 1rem; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+.badge { display:inline-flex; align-items:center; padding: 0.1rem 0.5rem; border-radius: 999px; background:#f1f5f9; color:#334155; font-size: 0.75rem; }
+.stat .label { color:#64748b; }
+.stat .value { font-weight:600; }
+
